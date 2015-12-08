@@ -9934,6 +9934,13 @@ Print strings in a color specified as a symbol, for example `:red` or `:blue`.
 print_with_color
 
 doc"""
+    println_with_color(color::Symbol, [io], strings...)
+
+Print strings in a color specified as a symbol, for example `:red` or `:blue`, followed by a newline.
+"""
+println_with_color
+
+doc"""
     stringmime(mime, x)
 
 Returns an `AbstractString` containing the representation of `x` in the requested `mime` type. This is similar to `reprmime` except that binary data is base64-encoded as an ASCII string.

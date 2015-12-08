@@ -869,6 +869,7 @@ export
     print_unescaped,
     print_with_color,
     println,
+    println_with_color,
     randstring,
     repeat,
     replace,
