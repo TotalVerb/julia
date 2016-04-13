@@ -50,7 +50,7 @@ they share the same function/line information. For unknown functions, line == po
 never actually need to consider the pointer field.
 =#
 function ==(a::StackFrame, b::StackFrame)
-    a.line == b.line && a.from_c == b.from_c && a.func == b.func && a.file == b.file
+    a.line == b.line && a.from_c == b.from_c && a.func == b.func && a.file == b.file && a.inlined == b.inlined
 end
 
 function hash(frame::StackFrame, h::UInt)
@@ -58,6 +58,8 @@ function hash(frame::StackFrame, h::UInt)
     h = hash(frame.line, h)
     h = hash(frame.file, h)
     h = hash(frame.func, h)
+    h = hash(frame.from_c, h)
+    h = hash(frame.inlined, h)
 end
 
 # provide a custom serializer that skips attempting to serialize the `outer_linfo`
