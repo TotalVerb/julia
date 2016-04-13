@@ -883,7 +883,7 @@ function show_unquoted(io::IO, ex::Expr, indent::Int, prec::Int)
             end
         end
     elseif is(head, :meta) && length(args) >= 2 && args[1] === :push_lambda
-        print(io, "# meta: push_lambda")
+        print(io, "# meta: push_lambda roots[", args[2], "]")
         show_type = false
     elseif is(head, :meta) && length(args) == 1 && args[1] === :pop_lambda
         print(io, "# meta: pop_lambda")

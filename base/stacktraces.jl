@@ -78,7 +78,7 @@ end
 function deserialize(s::SerializationState, ::Type{StackFrame})
     func = deserialize(s)
     file = deserialize(s)
-    line = read(s.io, Int64)
+    line = read(s.io, Int)
     from_c = read(s.io, Bool)
     inlined = read(s.io, Bool)
     pointer = read(s.io, Int64)
