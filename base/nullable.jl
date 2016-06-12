@@ -45,8 +45,6 @@ function show{T}(io::IO, x::Nullable{T})
     end
 end
 
-get(x::Nullable) = x.isnull ? throw(NullException()) : x.value
-
 @inline function get{T}(x::Nullable{T}, y)
     if isbits(T)
         ifelse(x.isnull, convert(T, y), x.value)

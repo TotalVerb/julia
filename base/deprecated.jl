@@ -713,6 +713,8 @@ hist2d(v::AbstractMatrix) = hist2d(v, sturges(size(v,1)))
 @deprecate(pointer_to_string(p::Ptr{UInt8}, own::Bool=false),
     unsafe_wrap(String, p, own))
 
+@deprecate get(x::Nullable) x[]
+
 # During the 0.5 development cycle, do not add any deprecations below this line
 # To be deprecated in 0.6
 
