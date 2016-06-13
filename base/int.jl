@@ -305,6 +305,9 @@ promote_rule{T<:BitSigned64}(::Type{UInt64}, ::Type{T}) = UInt64
 promote_rule{T<:Union{UInt32, UInt64}}(::Type{T}, ::Type{Int128}) = Int128
 promote_rule{T<:BitSigned}(::Type{UInt128}, ::Type{T}) = UInt128
 
+# the result on one is a good heuristic for promotion type
+promote_op{T,R<:Integer}(::Type{T}, ::Type{R}) = T  # to avoid ambiguity
+promote_op{R<:Integer}(op, ::Type{R}) = typeof(op(one(R)))
 promote_op{R<:Integer,S<:Integer}(op, ::Type{R}, ::Type{S}) = typeof(op(one(R), one(S)))
 
 ## traits ##
