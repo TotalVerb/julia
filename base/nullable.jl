@@ -78,3 +78,61 @@ function hash(x::Nullable, h::UInt)
         return hash(x.value, h + nullablehash_seed)
     end
 end
+
+# as collection
+length(x::Nullable) = x.isnull ? 0 : 1
+endof(x::Nullable)  = length(x)
+
+# indexing is either without index, or with 1 as index
+# generalized linear indexing is not supported
+linearindexing{T}(::Nullable{T}) = LinearFast()
+function getindex(x::Nullable)
+    @boundscheck x.isnull && throw(NullException())
+    x.value
+end
+function getindex(x::Nullable, i::Integer)
+    @boundscheck (x.isnull | (i ≠ 1)) && throw(BoundsError(i, x))
+    x.value
+end
+
+# convenience method for getindex without bounds checking
+unsafe_getindex(x::Nullable) = x.value
+unsafe_getindex(x::Number) = x
+
+# convenience method for detecting null value
+isnullvalue(x::Nullable) = x.isnull
+isnullvalue(x::Number) = false
+
+# iteration protocol
+start(x::Nullable) = 1
+next(x::Nullable, i::Integer) = x.value, 0
+done(x::Nullable, i::Integer) = x.isnull | (i == 0)
+
+# higher-order functions
+function filter{T}(p, x::Nullable{T})
+    if x.isnull
+        x
+    elseif p(x.value)
+        x
+    else
+        Nullable{T}()
+    end
+end
+
+function map{T}(f, x::Nullable{T})
+    if x.isnull
+        Nullable{Union{}}()  # Union{} for consistency with arrays
+    else
+        Nullable(f(x.value))
+    end
+end
+
+function map(f, xs::Nullable...)
+    if all(isnull, xs)
+        Nullable()
+    elseif !any(isnull, xs)
+        Nullable(map(f, map(unsafe_getindex, xs)...))
+    else
+        throw(DimensionMismatch("expected all null or all nonnull"))
+    end
+end

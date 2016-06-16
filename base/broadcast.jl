@@ -3,7 +3,9 @@
 module Broadcast
 
 using Base.Cartesian
-using Base: promote_op, promote_eltype, promote_eltype_op, @get!, _msk_end, unsafe_bitgetindex, shape, linearindices, allocate_for, tail, dimlength
+using Base: promote_op, promote_eltype, promote_eltype_op, @get!, _msk_end,
+            unsafe_bitgetindex, shape, linearindices, allocate_for, tail,
+            dimlength, isnullvalue
 import Base: .+, .-, .*, ./, .\, .//, .==, .<, .!=, .<=, .÷, .%, .<<, .>>, .^
 export broadcast, broadcast!, bitbroadcast
 export broadcast_getindex, broadcast_setindex!
@@ -361,6 +363,52 @@ for (sigA, sigB) in ((BitArray, BitArray),
             return bitbroadcast(&, A, B)
         end
     end
+end
+
+# additional definitions for Nullable
+# fast one & two-argument implementations
+function broadcast{T}(f, x::Nullable{T})
+    restype = promote_op(f, T)
+    if x.isnull
+        Nullable{restype}()
+    else
+        Nullable{restype}(f(x.value))
+    end
+end
+
+function broadcast(f, x::Union{Nullable, Number}, y::Union{Nullable, Number})
+    if isa(x, Number) && isa(y, Number)
+        throw(ArgumentError("broadcast is not supported on numbers"))
+    end
+    restype = promote_op(f, eltype(x), eltype(y))
+    if isnullvalue(x) | isnullvalue(y)
+        Nullable{restype}()
+    else
+        Nullable{restype}(f(unsafe_getindex(x), unsafe_getindex(y)))
+    end
+end
+
+# generic multi-argument implementation
+function broadcast(f, xs::Union{Nullable, Number}...)
+    restype = promote_op(f, (eltype(typeof(x)) for x in xs)...)
+    for x in xs
+        if isnullvalue(x)
+            return Nullable{restype}()
+        end
+    end
+    Nullable{restype}(f(map(unsafe_getindex, xs)...))
+end
+
+# to maintain broadcast(fn, Number) behaviour
+broadcast(f, x::Number) = broadcast(f, collect(x))
+
+# dispatch elementwise operations to broadcast
+for (eop, op) in ((:.+, :+), (:.-, :-), (:.*, :*), (:./, :/), (:.\, :\),
+                  (:.//, ://), (:.==, :(==)), (:.<, :<), (:.!=, :!=),
+                  (:.<=, :<=), (:.÷, :÷), (:.%, :%), (:.<<, :<<), (:.>>, :>>),
+                  (:.^, :^))
+    @eval $eop(x::Nullable, y::Union{Nullable, Number}) = broadcast($op, x, y)
+    @eval $eop(x::Number, y::Nullable) = broadcast($op, x, y)
 end
 
 end # module
