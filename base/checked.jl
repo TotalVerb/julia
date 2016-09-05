@@ -106,13 +106,13 @@ end
 if BrokenSignedInt != Union{}
 function checked_neg{T<:BrokenSignedInt}(x::T)
     r = -x
-    (x<0) & (r<0) && throw(OverflowError())
+    (x<0) & (r<0) && throw(OverflowError{T}())
     r
 end
 end
 if BrokenUnsignedInt != Union{}
 function checked_neg{T<:BrokenUnsignedInt}(x::T)
-    x != 0 && throw(OverflowError())
+    x != 0 && throw(OverflowError{T}())
     T(0)
 end
 end
@@ -130,7 +130,7 @@ function checked_abs end
 
 function checked_abs(x::SignedInt)
     r = ifelse(x<0, -x, x)
-    r<0 && throw(OverflowError())
+    r<0 && throw(OverflowError{typeof(x)}())
     r
  end
 checked_abs(x::UnsignedInt) = x
@@ -154,7 +154,7 @@ if BrokenSignedInt != Union{}
 function checked_add{T<:BrokenSignedInt}(x::T, y::T)
     r = x + y
     # x and y have the same sign, and the result has a different sign
-    (x<0) == (y<0) != (r<0) && throw(OverflowError())
+    (x<0) == (y<0) != (r<0) && throw(OverflowError{T}())
     r
 end
 end
@@ -162,7 +162,7 @@ if BrokenUnsignedInt != Union{}
 function checked_add{T<:BrokenUnsignedInt}(x::T, y::T)
     # x + y > typemax(T)
     # Note: ~y == -y-1
-    x > ~y && throw(OverflowError())
+    x > ~y && throw(OverflowError{T}())
     x + y
 end
 end
@@ -203,14 +203,14 @@ if BrokenSignedInt != Union{}
 function checked_sub{T<:BrokenSignedInt}(x::T, y::T)
     r = x - y
     # x and y have different signs, and the result has a different sign than x
-    (x<0) != (y<0) == (r<0) && throw(OverflowError())
+    (x<0) != (y<0) == (r<0) && throw(OverflowError{T}())
     r
 end
 end
 if BrokenUnsignedInt != Union{}
 function checked_sub{T<:BrokenUnsignedInt}(x::T, y::T)
     # x - y < 0
-    x < y && throw(OverflowError())
+    x < y && throw(OverflowError{T}())
     x - y
 end
 end
@@ -235,14 +235,14 @@ end
 if BrokenSignedIntMul != Union{} && BrokenSignedIntMul != Int128
 function checked_mul{T<:BrokenSignedIntMul}(x::T, y::T)
     r = widemul(x, y)
-    r % T != r && throw(OverflowError())
+    r % T != r && throw(OverflowError{T}())
     r % T
 end
 end
 if BrokenUnsignedIntMul != Union{} && BrokenUnsignedIntMul != UInt128
 function checked_mul{T<:BrokenUnsignedIntMul}(x::T, y::T)
     r = widemul(x, y)
-    r % T != r && throw(OverflowError())
+    r % T != r && throw(OverflowError{T}())
     r % T
 end
 end
@@ -252,14 +252,14 @@ if Int128 <: BrokenSignedIntMul
         if y > 0
             # x * y > typemax(T)
             # x * y < typemin(T)
-            x > fld(typemax(T), y) && throw(OverflowError())
-            x < cld(typemin(T), y) && throw(OverflowError())
+            x > fld(typemax(T), y) && throw(OverflowError{T}())
+            x < cld(typemin(T), y) && throw(OverflowError{T}())
         elseif y < 0
             # x * y > typemax(T)
             # x * y < typemin(T)
-            x < cld(typemax(T), y) && throw(OverflowError())
+            x < cld(typemax(T), y) && throw(OverflowError{T}())
             # y == -1 can overflow fld
-            y != -1 && x > fld(typemin(T), y) && throw(OverflowError())
+            y != -1 && x > fld(typemin(T), y) && throw(OverflowError{T}())
         end
         x * y
     end
@@ -268,7 +268,7 @@ if UInt128 <: BrokenUnsignedIntMul
     # Avoid BigInt
     function checked_mul{T<:UInt128}(x::T, y::T)
         # x * y > typemax(T)
-        y > 0 && x > fld(typemax(T), y) && throw(OverflowError())
+        y > 0 && x > fld(typemax(T), y) && throw(OverflowError{T}())
         x * y
     end
 end

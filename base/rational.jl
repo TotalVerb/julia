@@ -184,11 +184,11 @@ isinteger(x::Rational) = x.den == 1
 
 -(x::Rational) = (-x.num) // x.den
 function -{T<:Signed}(x::Rational{T})
-    x.num == typemin(T) && throw(OverflowError())
+    x.num == typemin(T) && throw(OverflowError{T}())
     (-x.num) // x.den
 end
 function -{T<:Unsigned}(x::Rational{T})
-    x.num != zero(T) && throw(OverflowError())
+    x.num != zero(T) && throw(OverflowError{T}())
     x
 end
 

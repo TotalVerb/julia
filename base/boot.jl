@@ -199,7 +199,8 @@ immutable BoundsError        <: Exception
 end
 immutable DivideError        <: Exception end
 immutable DomainError        <: Exception end
-immutable OverflowError      <: Exception end
+immutable OverflowError{T}   <: Exception end
+OverflowError() = OverflowError{Union{}}()
 immutable InexactError       <: Exception end
 immutable OutOfMemoryError   <: Exception end
 immutable ReadOnlyMemoryError<: Exception end

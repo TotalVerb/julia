@@ -383,6 +383,9 @@ function showerror(io::IO, ex::MethodError)
     end
 end
 
+showerror{T}(io::IO, ex::OverflowError{T}) =
+    print(io, "OverflowError: an intermediate computation would overflow $T")
+
 striptype{T}(::Type{T}) = T
 striptype(::Any) = nothing
 

@@ -43,7 +43,7 @@ function gcd{T<:Union{Int64,UInt64,Int128,UInt128}}(a::T, b::T)
     end
     r = u << k
     # T(r) would throw InexactError; we want OverflowError instead
-    r > typemax(T) && throw(OverflowError())
+    r > typemax(T) && throw(OverflowError{T}())
     r % T
 end
 
@@ -588,7 +588,7 @@ function binomial{T<:Integer}(n::T, k::T)
     while rr <= k
         xt = div(widemul(x, nn), rr)
         x = xt
-        x == xt || throw(OverflowError())
+        x == xt || throw(OverflowError{T}())
         rr += 1
         nn += 1
     end

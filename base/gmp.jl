@@ -426,7 +426,7 @@ function bigint_pow(x::BigInt, y::Integer)
        #
        #Assume that the answer will definitely overflow.
 
-       throw(OverflowError())
+       throw(OverflowError{BigInt}())
     end
     return x^convert(Culong, y)
 end

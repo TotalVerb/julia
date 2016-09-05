@@ -111,7 +111,7 @@ function tryparse_internal{T<:Integer}(::Type{T}, s::AbstractString, startpos::I
         safe_n = safe_mul(n, base)
         isnull(safe_n) || (safe_n = safe_add(get(safe_n), d))
         if isnull(safe_n)
-            raise && throw(OverflowError())
+            raise && throw(OverflowError{T}())
             return _n
         end
         n = get(safe_n)

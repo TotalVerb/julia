@@ -28,7 +28,7 @@ const _fact_table128 =
 
 function factorial_lookup(n::Integer, table, lim)
     n < 0 && throw(DomainError())
-    n > lim && throw(OverflowError())
+    n > lim && throw(OverflowError{typeof(n)}())
     n == 0 && return one(n)
     @inbounds f = table[n]
     return oftype(n, f)
