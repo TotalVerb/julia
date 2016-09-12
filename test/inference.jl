@@ -365,6 +365,10 @@ function test18399(C)
 end
 @test test18399(C18399) == (2, 3)
 
+# issue #18387
+test18387() = im.im ? 0 : 0.0
+@test @inferred test18387()
+
 # issue #18450
 f18450() = ifelse(true, Tuple{Vararg{Int}}, Tuple{Vararg})
 @test f18450() == Tuple{Vararg{Int}}

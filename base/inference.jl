@@ -244,9 +244,15 @@ cmp_tfunc = (x,y)->Bool
 isType(t::ANY) = isa(t,DataType) && is((t::DataType).name,Type.name)
 
 # true if Type is inlineable as constant
-isconstType(t::ANY,b::Bool) =
-    isType(t) && !has_typevars(t.parameters[1],b) &&
-    !issubtype(Type{Tuple{Vararg}}, t)  # work around inference bug #18450
+function isconstType(t::ANY,b::Bool)
+    !isType(t) && return false
+    tp = t.parameters[1]
+    has_typevars(tp,b) && return false
+
+    # work around inference bug #18450
+    return !(is(tp.name, Tuple.name) &&
+             issubtype(Vararg, tp.parameters[end]))
+end
 
 const IInf = typemax(Int) # integer infinity
 const n_ifunc = reinterpret(Int32,arraylen)+1
@@ -463,7 +469,15 @@ function getfield_tfunc(s0::ANY, name)
         if isa(s.val, Module) && isa(name, Const) && isa(name.val, Symbol)
             return abstract_eval_global(s.val, name.val), true
         end
-        s = typeof(s.val)
+        st = typeof(s.val)
+        if isa(st, DataType) && !st.mutable && isa(name, Const)
+            if isdefined(s.val, name.val)
+                return abstract_eval_constant(getfield(s.val, name.val)), true
+            else
+                return Bottom, true
+            end
+        end
+        s = st
     end
     if isa(s,Union)
         return reduce(tmerge, Bottom, map(t->getfield_tfunc(t, name)[1], s.types)), false
@@ -552,6 +566,7 @@ function fieldtype_tfunc(s::ANY, name)
         return Type
     end
     t, exact = getfield_tfunc(s, name)
+    t = widenconst(t)
     if is(t,Bottom)
         return t
     end
@@ -1089,10 +1104,10 @@ function abstract_call(f::ANY, fargs, argtypes::Vector{Any}, vtypes::VarTable, s
                 return getfield_tfunc(argtypes[2], argtypes[3])[1]
             elseif istopfunction(tm, f, :next)
                 t1 = getfield_tfunc(argtypes[2], argtypes[3])[1]
-                return t1===Bottom ? Bottom : Tuple{t1, Int}
+                return t1===Bottom ? Bottom : Tuple{widenconst(t1), Int}
             elseif istopfunction(tm, f, :indexed_next)
                 t1 = getfield_tfunc(argtypes[2], argtypes[3])[1]
-                return t1===Bottom ? Bottom : Tuple{t1, Int}
+                return t1===Bottom ? Bottom : Tuple{widenconst(t1), Int}
             end
         end
     end
@@ -2349,6 +2364,17 @@ function inline_as_constant(val::ANY, argexprs, sv::InferenceState)
     return (QuoteNode(val), stmts)
 end
 
+function try_inline_as_constant(typ::ANY, argexprs, sv::InferenceState)
+    if isType(typ)
+        if !has_typevars(typ.parameters[1])
+            return inline_as_constant(typ.parameters[1], argexprs, sv)
+        end
+    elseif isa(typ,Const)
+        return inline_as_constant(typ.val, argexprs, sv)
+    end
+    return NF
+end
+
 function countunionsplit(atypes::Vector{Any})
     nu = 1
     for ti in atypes
@@ -2406,6 +2432,12 @@ function inlineable(f::ANY, ft::ANY, e::Expr, atypes::Vector{Any}, sv::Inference
             else
                 return (e.typ.val, Any[argexprs[2]])
             end
+        end
+    end
+    if is_pure_builtin(f)
+        tiac = try_inline_as_constant(e.typ, argexprs, sv)
+        if tiac !== NF
+            return tiac
         end
     end
     if isa(f, IntrinsicFunction) || ft ⊑ IntrinsicFunction ||
@@ -2536,10 +2568,9 @@ function inlineable(f::ANY, ft::ANY, e::Expr, atypes::Vector{Any}, sv::Inference
     method = meth[3]::Method
     # check whether call can be inlined to just a quoted constant value
     if isa(f, widenconst(ft)) && !method.isstaged && (method.source.pure || f === return_type)
-        if isconstType(e.typ,false)
-            return inline_as_constant(e.typ.parameters[1], argexprs, sv)
-        elseif isa(e.typ,Const)
-            return inline_as_constant(e.typ.val, argexprs, sv)
+        tiac = try_inline_as_constant(e.typ, argexprs, sv)
+        if tiac !== NF
+            return tiac
         end
     end
 
