@@ -85,10 +85,10 @@ for (i, T) in enumerate(types)
     show(io1, x1)
     @test takebuf_string(io1) == @sprintf("Nullable{%s}()", T)
     show(io1, x2)
-    showcompact(io2, get(x2))
+    showcompact(io2, x2[])
     @test takebuf_string(io1) == @sprintf("Nullable{%s}(%s)", T, takebuf_string(io2))
     show(io1, x3)
-    showcompact(io2, get(x3))
+    showcompact(io2, x3[])
     @test takebuf_string(io1) == @sprintf("Nullable{%s}(%s)", T, takebuf_string(io2))
 
     a1 = [x2]
@@ -120,10 +120,10 @@ for (i, T) in enumerate(types)
     showcompact(io1, x1)
     @test takebuf_string(io1) == "#NULL"
     showcompact(io1, x2)
-    showcompact(io2, get(x2))
+    showcompact(io2, x2[])
     @test takebuf_string(io1) == takebuf_string(io2)
     showcompact(io1, x3)
-    showcompact(io2, get(x3))
+    showcompact(io2, x3[])
     @test takebuf_string(io1) == takebuf_string(io2)
 
     a1 = [x2]
@@ -133,18 +133,18 @@ for (i, T) in enumerate(types)
         @sprintf("Nullable{%s}[%s]", string(T), takebuf_string(io2))
 end
 
-# get(x::Nullable)
+# getindex(x::Nullable)
 for T in types
     x1 = Nullable{T}()
     x2 = Nullable(zero(T))
     x3 = Nullable(one(T))
 
-    @test_throws NullException get(x1)
-    @test get(x2) === zero(T)
-    @test get(x3) === one(T)
+    @test_throws NullException x1[]
+    @test x2[] === zero(T)
+    @test x3[] === one(T)
 end
 
-@test_throws NullException get(Nullable())
+@test_throws NullException Nullable()[]
 
 # get{S, T}(x::Nullable{S}, y::T)
 for T in types
