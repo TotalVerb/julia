@@ -58,7 +58,6 @@ otherwise, returns `y`.
         x.isnull ? y : x.value
     end
 end
-get(x::Nullable) = x[]
 
 """
     getindex(x::Nullable)

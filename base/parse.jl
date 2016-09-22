@@ -109,11 +109,11 @@ function tryparse_internal{T<:Integer}(::Type{T}, s::AbstractString, startpos::I
         (T <: Signed) && (d *= sgn)
 
         safe_n = safe_mul(n, base)
-        isnull(safe_n) || (safe_n = safe_add(get(safe_n), d))
         if isnull(safe_n)
             raise && throw(OverflowError())
             return _n
         end
+        safe_n = safe_add(safe_n[], d)
         n = get(safe_n)
         (i > endpos) && return Nullable{T}(n)
         c, i = next(s,i)

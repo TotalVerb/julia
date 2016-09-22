@@ -1009,4 +1009,7 @@ export @vectorize_1arg, @vectorize_2arg
 @deprecate abs(M::SymTridiagonal) abs.(M)
 @deprecate abs(x::AbstractSparseVector) abs.(x)
 
+# Deprecate get(x) in favour of x[]
+get(x::Nullable) = x[]
+
 # End deprecations scheduled for 0.6
