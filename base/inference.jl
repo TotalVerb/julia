@@ -2993,7 +2993,12 @@ function inlining_pass(e::Expr, sv::InferenceState)
     for _i=length(eargs):-1:i0
         i = (isccall && _i == 4) ? 2 : _i
         ei = eargs[i]
-        if isa(ei,Expr)
+        if isa(ei,GlobalRef)
+            ev = abstract_eval_global(ei.mod, ei.name)
+            if isa(ev, Const)
+                eargs[i] = QuoteNode(ev.val)
+            end
+        elseif isa(ei,Expr)
             ei = ei::Expr
             if ei.head === :&
                 argloc = ei.args
