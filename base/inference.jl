@@ -244,15 +244,9 @@ cmp_tfunc = (x,y)->Bool
 isType(t::ANY) = isa(t,DataType) && is((t::DataType).name,Type.name)
 
 # true if Type is inlineable as constant
-function isconstType(t::ANY,b::Bool)
-    !isType(t) && return false
-    tp = t.parameters[1]
-    has_typevars(tp,b) && return false
-
-    # work around inference bug #18450
-    return !(is(tp.name, Tuple.name) &&
-             issubtype(Vararg, tp.parameters[end]))
-end
+isconstType(t::ANY,b::Bool) =
+    isType(t) && !has_typevars(t.parameters[1],b) &&
+    !(isa(t.parameters[1], DataType) && is(t.parameters[1].name, Tuple.name))  # todo: fix this workaround
 
 const IInf = typemax(Int) # integer infinity
 const n_ifunc = reinterpret(Int32,arraylen)+1
