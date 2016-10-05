@@ -34,6 +34,14 @@
                      prec-pipe prec-colon prec-plus prec-bitshift prec-times prec-rational
                      prec-power prec-decl prec-dot))
 
+;; brackets do not have any meaningful precedence, but the lexer needs to know
+;; about them still
+(define special-brackets '((#\⌊ #\⌋) (#\⌈ #\⌉)))
+(define left-special-brackets (map car special-brackets))
+(define right-special-brackets (map cadr special-brackets))
+(define left-brackets (append '(#\( #\[ #\{) left-special-brackets))
+(define right-brackets (append '(#\) #\] #\}) right-special-brackets))
+
 (define (Set l)
   ;; construct a length-specialized membership tester
   (cond ((length= l 1)
@@ -335,7 +343,8 @@
                (let ((nxt (peek-char port)))
                  (and (not (eof-object? nxt))
                       (or (identifier-start-char? nxt)
-                          (memv nxt '(#\( #\[ #\{ #\@ #\` #\~ #\"))))))
+                          (memv nxt '(#\@ #\` #\~ #\"))
+                          (memv nxt left-brackets)))))
           (error (string "numeric constant \"" s "\" cannot be implicitly multiplied because it ends with \".\"")))
       ;; n is #f for integers > typemax(UInt64)
       (cond (is-hex-float-literal (numchk n s) (double n))
@@ -843,7 +852,7 @@
            (not (number? t))    ;; disallow "x.3" and "sqrt(2)2"
            ;; to allow x'y as a special case
            #;(and (pair? expr) (memq (car expr) '(|'| |.'|))
-                (not (memv t '(#\( #\[ #\{))))
+                (not (memv t left-brackets)))
            )
        (not (ts:space? s))
        (not (operator? t))

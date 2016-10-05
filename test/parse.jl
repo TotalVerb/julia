@@ -818,3 +818,8 @@ type Type
 end
 end
 @test method_exists(Mod18756.Type, ())
+
+# unicode brackets
+
+# no numeric juxtaposition if number ends in .
+@test_throws ParseError parse("1.⌊x⌋")
