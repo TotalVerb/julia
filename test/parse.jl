@@ -823,3 +823,6 @@ end
 
 # no numeric juxtaposition if number ends in .
 @test_throws ParseError parse("1.⌊x⌋")
+
+# check parsing of special operators
+@test parse("⌊x⌋") == Expr(:call, Symbol("⌊⌋"), :x)

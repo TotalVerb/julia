@@ -41,6 +41,7 @@
 (define right-special-brackets (map cadr special-brackets))
 (define left-brackets (append '(#\( #\[ #\{) left-special-brackets))
 (define right-brackets (append '(#\) #\] #\}) right-special-brackets))
+(define brackets (append left-brackets right-brackets))
 
 (define (Set l)
   ;; construct a length-specialized membership tester
@@ -470,7 +471,8 @@
 
           ((identifier-start-char? c)     (accum-julia-symbol c port))
 
-          ((string.find "()[]{},;\"`@" c) (read-char port))
+          ((string.find ",;\"`@" c)       (read-char port))
+          ((memv c brackets)              (read-char port))
 
           ((string.find "0123456789" c)   (read-number port #f #f))
 
@@ -590,7 +592,8 @@
 
 (define (invalid-initial-token? tok)
   (or (eof-object? tok)
-      (memv tok '(#\) #\] #\} else elseif catch finally =))))
+      (memv tok '(else elseif catch finally =))
+      (memv tok right-brackets)))
 
 (define (line-number-node s)
   `(line ,(input-port-line (ts:port s)) ,current-filename))
@@ -827,7 +830,7 @@
             (else ex)))))
 
 (define closing-token?
-  (let ((closer? (Set '(else elseif catch finally #\, #\) #\] #\} #\;))))
+  (let ((closer? (Set `(else elseif catch finally #\, #\; ,@right-brackets))))
     (lambda (tok)
       (or (and (eq? tok 'end) (not end-symbol))
           (closer? tok)
@@ -2024,6 +2027,13 @@
                                                   (apply map list
                                                          (map cdr (cdr vex)))))))
                             `(cell1d ,@(cdr vex)))))))))
+
+          ;; special brackets
+          ((memv t left-special-brackets)
+           (take-token s)
+           (let ((closer (cadr (assoc t special-brackets))))
+             `(call ,(symbol (string t closer))
+                    ,@(parse-arglist s closer))))
 
           ;; string literal
           ((eqv? t #\")
